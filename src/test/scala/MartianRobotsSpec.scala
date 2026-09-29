@@ -27,8 +27,8 @@ class MartianRobotsSpec extends AnyFlatSpec with Matchers with TableDrivenProper
 
   it should "return to itself after four turns either way" in {
     headings.foreach { h =>
-      Function.chain(Seq.fill(4)(left))(h) shouldBe h
-      Function.chain(Seq.fill(4)(right))(h) shouldBe h
+      left(left(left(left(h)))) shouldBe h
+      right(right(right(right(h)))) shouldBe h
     }
   }
 
@@ -91,6 +91,18 @@ class MartianRobotsSpec extends AnyFlatSpec with Matchers with TableDrivenProper
     run("0 0\n0 0 N\nF\n0 0 W\nFRF\n") shouldBe List("0 0 N LOST", "0 0 N")
   }
 
+  it should "record a scent only for a lost robot" in {
+    run("5 3\n5 3 N\nL\n5 3 N\nF\n") shouldBe List("5 3 W", "5 3 N LOST")
+  }
+
+  it should "produce no output for a grid with no robots" in {
+    run("5 3\n") shouldBe Nil
+  }
+
+  it should "accept coordinates over 50 and instruction strings over 100 characters" in {
+    run("60 60\n0 0 N\n" + "F" * 60 + "LL" + "F" * 60 + "\n") shouldBe List("0 0 S")
+  }
+
   it should "tolerate blank lines, CRLF and indentation" in {
     run("  5 3 \r\n\r\n1 1 E\r\n\tRFRF\r\n\r\n") shouldBe List("0 0 W")
   }
@@ -113,10 +125,13 @@ class MartianRobotsSpec extends AnyFlatSpec with Matchers with TableDrivenProper
       ("5 3\n1 E\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 E'"),
       ("5 3\n1 1 E extra\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 1 E extra'"),
       ("5 3\n1 1 Q\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 1 Q'"),
+      ("5 3\n1 1 n\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 1 n'"),
       ("5 3\n1 1 EE\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 1 EE'"),
       ("5 3\nx 1 E\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got 'x 1 E'"),
       ("5 3\n9 9 N\nF\n", "robot '9 9 N' starts outside the grid"),
       ("5 3\n1 1 E\nRFXF\n", "unknown instruction 'X'"),
+      ("5 3\n1 1 E\nf\n", "unknown instruction 'f'"),
+      ("5 3\n1 1 E\n\n2 2 N\nF\n", "unknown instruction '2'"),   // a blank instruction line shifts the pairing
       ("5 3\n1 1 E\n", "robot '1 1 E' has no instruction line"))
     forAll(rejections) { (input, message) =>
       the[IllegalArgumentException] thrownBy run(input) should have message message
