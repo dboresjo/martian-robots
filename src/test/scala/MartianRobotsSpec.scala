@@ -96,7 +96,7 @@ class MartianRobotsSpec extends AnyFlatSpec with Matchers with TableDrivenProper
     an[IllegalArgumentException] should be thrownBy output.next()
   }
 
-  it should "reject malformed input with a message that quotes the offending line" in {
+  it should "reject malformed input with a message that quotes the offending input" in {
     val rejections = Table(
       ("input", "message"),
       ("", "input is empty; expected the grid size on the first line"),
@@ -109,10 +109,10 @@ class MartianRobotsSpec extends AnyFlatSpec with Matchers with TableDrivenProper
       ("5 3\n1 1 Q\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 1 Q'"),
       ("5 3\n1 1 EE\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got '1 1 EE'"),
       ("5 3\nx 1 E\nF\n", "expected '<x> <y> <N|E|S|W>' for a robot, got 'x 1 E'"),
+      ("5 3\n9 9 N\nF\n", "robot '9 9 N' starts outside the grid"),
       ("5 3\n1 1 E\nRFXF\n", "unknown instruction 'X'"),
       ("5 3\n1 1 E\n", "robot '1 1 E' has no instruction line"))
     forAll(rejections) { (input, message) =>
       the[IllegalArgumentException] thrownBy run(input) should have message message
     }
-    an[IllegalArgumentException] should be thrownBy run("5 3\n9 9 N\nF\n") // starts outside the grid
   }

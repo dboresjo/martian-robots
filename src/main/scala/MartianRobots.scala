@@ -61,7 +61,7 @@ case class Mars(xAxis: Range, yAxis: Range):
 
   /** Run one robot: the robot after its last instruction, or Lost with its last pose if it fell off first. */
   def execute(scents: Set[Vec], robot: Robot, instructions: String): Robot | Lost =
-    require(contains(robot.location), s"robot '$robot' starts outside the grid")
+    if !contains(robot.location) then reject(s"robot '$robot' starts outside the grid")
     // @tailrec makes the compiler check that this recursion compiles to a loop.
     @tailrec def loop(robot: Robot, remaining: List[Char]): Robot | Lost =
       remaining match

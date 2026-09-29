@@ -21,9 +21,10 @@ From sbt:
 sbt -error run < samples/sample.txt
 ```
 
-`-error` suppresses sbt's own log lines. Do not use `-batch`; it disconnects stdin.
+`-error` suppresses sbt's info-level log lines; on a failed run sbt still prints its own `[error]`
+lines to stdout. Do not use `-batch`; it disconnects stdin.
 
-Without sbt, build the jar once:
+To run without sbt, build the jar once:
 
 ```sh
 sbt assembly
@@ -50,8 +51,8 @@ The tests use ScalaTest. IntelliJ can run them directly.
 
 ## Design
 
-One source file, `MartianRobots.scala`, about 90 lines. It is in the default package because nothing
-imports it.
+One source file, `MartianRobots.scala`, about 110 lines including comments. It is in the default
+package because nothing imports it.
 
 - `Vec`: an integer 2-vector with `+`, used for both locations and headings. Moving forward is
   `location + facing`.
@@ -64,14 +65,14 @@ imports it.
   `step(scents, robot, instruction)` applies one instruction and returns `Some(robot)`, or `None` if
   the robot has fallen off the grid. `execute` applies an instruction string with a tail-recursive
   loop and returns `Robot | Lost`: the robot if it completed its instructions, or `Lost(robot)` with
-  its last position if it fell off first. Both are pure functions. A lost robot is a separate outcome
+  its last position if it fell off first. Neither mutates anything. A lost robot is a separate outcome
   rather than a flag on `Robot`.
 - Scents are held separately from `Mars` because they do not change during a robot's run: a robot
   adds a scent only by being lost, which ends its run. `step` and `execute` take the scent set as a
   read-only parameter, and it is updated between robots.
 - `MissionControl.run`: takes an iterator of input lines and returns an iterator of output lines. A
   `scanLeft` over the robot pairs carries the scent set from each robot to the next. Each output line
-  is produced before the next robot is read, so memory use does not depend on the number of robots.
+  is produced before the next robot is read, and only the scent set is held between robots.
 - `main`: a top-level `@main` entry point connecting stdin and stdout to `MissionControl.run`.
   Malformed input is reported through `reject`, which throws an `IllegalArgumentException`; `main`
   prints the message and exits with code 1. Any other exception is a bug and is left to produce a
@@ -86,8 +87,8 @@ and `step` to match on tokens; the rest of the model would not change.
 
 For readers coming from other languages:
 
-- Blocks are indented rather than braced; a colon at the end of a line opens one. `if c then a else b`
-  is an expression, as is `match`, whose arms start with `case` and may carry an `if` guard.
+- Blocks are indented rather than braced; a colon at the end of a line opens one. `match` is an
+  expression whose arms start with `case` and may carry an `if` guard.
 - `case class Vec(x: Int, y: Int)` is Kotlin's `data class`, or a Rust struct deriving `Clone`,
   `PartialEq` and `Debug`: compared by value, copied with `copy(field = ...)`, usable in patterns.
 - `object Heading` is a singleton used as a namespace, like Kotlin's `object` or a Rust module.
@@ -101,9 +102,8 @@ For readers coming from other languages:
   an integer. `Array(a, b)` and `Seq(a, b)` match exactly two elements. `x :: rest` matches a
   non-empty list, binding its first element and the remainder (Rust's `[x, rest @ ..]`); `Nil` is
   the empty list.
-- `require(condition, message)` is a precondition check that throws `IllegalArgumentException`, as
-  in Kotlin. `@tailrec` asks the compiler to verify that a recursive call is in tail position and to
-  compile it to a loop, like Kotlin's `tailrec`.
+- `@tailrec` asks the compiler to verify that a recursive call is in tail position and to compile it
+  to a loop, like Kotlin's `tailrec`.
 - `0 to maxX` is an inclusive range: `0..maxX` in Kotlin, `0..=maxX` in Rust.
 - Collections are immutable by default: `scents + location` returns a new set. `grouped(2)` is
   `chunked(2)` or `chunks(2)`. `scanLeft` is a fold that emits every intermediate accumulator, like
@@ -133,7 +133,7 @@ For readers coming from other languages:
   between robots seemed the more likely case.
 - Bad input stops the run. A malformed grid or position line, an unknown instruction letter, a robot
   without an instruction line and a robot starting off the grid are all rejected with a message
-  quoting the offending line. Because the input is streamed, robots before the bad one will already
+  quoting the offending input. Because the input is streamed, robots before the bad one will already
   have been reported.
 
 ## With more time
