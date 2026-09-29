@@ -58,6 +58,12 @@ class MartianRobotsSpec extends AnyFlatSpec with Matchers with TableDrivenProper
     mars.execute(noScents, Robot(Vec(5, 3), N), "FLFF") shouldBe Lost(Robot(Vec(5, 3), N))
   }
 
+  it should "be Lost off any edge, not only the northern one" in {
+    mars.execute(noScents, Robot(Vec(5, 1), E), "F") shouldBe Lost(Robot(Vec(5, 1), E))
+    mars.execute(noScents, Robot(Vec(1, 0), S), "F") shouldBe Lost(Robot(Vec(1, 0), S))
+    mars.execute(noScents, Robot(Vec(0, 1), W), "F") shouldBe Lost(Robot(Vec(0, 1), W))
+  }
+
   "A scent" should "make the losing move a no-op in any direction, and let the robot carry on" in {
     val scents = Set(Vec(5, 3))
     mars.execute(scents, Robot(Vec(5, 3), N), "FLF") shouldBe Robot(Vec(4, 3), W)

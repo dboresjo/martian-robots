@@ -138,8 +138,6 @@ For readers coming from other languages:
 
 ## With more time
 
-- Property tests for the two invariants: a robot that is not lost finishes inside the grid, and no
-  robot is lost from a scented point.
 - A native binary (Scala Native or GraalVM native-image) if JVM start-up time (about 0.3 s) mattered.
   The code has no JVM-specific dependencies.
 
